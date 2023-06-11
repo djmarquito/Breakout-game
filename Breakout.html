@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breakout Game</title>
+</head>
+<body>
+    <canvas 
+    id="gameCanvas"
+    width="800"
+    height="600">
+
+    </canvas>
+    <script>
+        var canvas;
+        var canvasContext;
+        var ballX = 50;
+        var xDirection = 1;
+        var ballY = 50;
+        var yDirection = 1;
+        var paddleX = 350;
+        var paddleSizeH = 200;
+        var paddleHeight = 20;
+        var ballSize = 50;
+        var score = 0;
+        var gameOver = false;
+        var brick = [];
+        var paddleEdgeSize = 5;
+        var bricksGone = 0;
+        var finish = false;
+                
+        for (let i = 0; i < 8; i++) {
+            brick[i] = true;    
+        }
+
+        // when the page finish loading do this
+        window.onload = function(){
+            
+            canvas = document.getElementById("gameCanvas");
+            canvasContext = canvas.getContext("2d");
+            const framesPerSecond = 120;
+            setInterval(callBoth, 1000/framesPerSecond);
+
+            canvas.addEventListener("mousedown", handleMouseClick);
+            
+            canvas.addEventListener("mousemove",
+                function(evt) {
+                    var mousePos = calculateMousePos(evt);
+                    paddleX = mousePos.x - (paddleSizeH/2);
+                });
+            }
+
+        function handleMouseClick(evt){
+            if (gameOver){
+            ballReset();
+        }}
+
+        function callBoth(){
+           if (gameOver){return;}
+            moveEverything();
+            drawEverything();
+            }
+
+        function calculateMousePos(evt){
+            var rect = canvas.getBoundingClientRect();
+            var root = document.documentElement;
+            var mouseX = evt.clientX - rect.left - root.scrollLeft;
+            var mouseY = evt.clientY - rect.top - root.scrollTop;
+            return {
+                x:mouseX,
+                y:mouseY
+            };
+        }
+
+        function ballReset(){
+            score = 0;//reset score
+            ballY = ballSize;//ball on top
+            ballX = canvas.width/2;//horizontal center
+            xDirection = -xDirection;//switch direction
+            yDirection = Math.sign(yDirection);//reset ball speed
+            gameOver = false; //play again
+            bricksGone = 0;//the bricks are back
+            for (let i = 0; i < 8; i++) {
+            brick[i] = true;//reset bricks    
+            }
+        }
+
+        function moveEverything(){
+            ballX = ballX + xDirection;
+            ballY = ballY + yDirection;
+            //right collision
+            if (ballX > canvas.width-ballSize){xDirection = -xDirection;}
+            
+            //left collision
+            if (ballX < ballSize){xDirection = -xDirection;}
+                        
+            //bottom collision
+            if (ballY > canvas.height-paddleHeight-ballSize){ 
+                if (ballX+(ballSize/2) > paddleX && ballX-(ballSize/2) < paddleX+paddleSizeH){
+                    xDirection=Math.sign(xDirection);
+                    yDirection = -yDirection;
+                    if (ballX > paddleX && ballX < paddleX+(paddleSizeH*.33)){xDirection=-2;}
+                    if (ballX > paddleX+(paddleSizeH*.66) && ballX < paddleX+paddleSizeH){xDirection=2;} 
+                    score--;
+                }
+                else {gameOver = true;}
+                }
+            
+            //top collision    
+            if (ballY < ballSize){
+                yDirection = -yDirection;
+                
+                //bricks & ball collision
+                for (let i = 0; i < 8; i++){
+                if (ballX > (i*100) && ballX < (i*100)+100){
+                    if (brick[i]){
+                    brick[i] = false; //erase collided brick
+                    score+=10; //score 10 points
+                    yDirection+=.5; //speed up the ball
+                    bricksGone++;
+                    if (bricksGone > 7){gameOver = finish = true;}    
+                }}}}}
+
+        function colorBricks(){
+            for (let i = 0; i < 8; i++) {
+            canvasContext.fillStyle = "violet";
+            if (brick[i]){
+            canvasContext.fillRect((i*100)+5,0,95, 20);
+            }}}
+
+        function drawEverything(){
+            //black background
+            canvasContext.fillStyle = "black";
+            canvasContext.fillRect(0,0,canvas.width, canvas.height);
+            
+            //color bricks
+            colorBricks(); 
+
+            //blue paddle
+            canvasContext.fillStyle = "blue";
+            canvasContext.fillRect(paddleX-paddleEdgeSize,580,paddleSizeH+paddleEdgeSize,20);
+
+            //red ball
+            canvasContext.fillStyle = "red";
+            canvasContext.beginPath();
+            canvasContext.arc(ballX,ballY,ballSize,0, Math.PI*2, true);
+            canvasContext.fill();
+
+            //the score
+            canvasContext.fillStyle = "green";
+            canvasContext.font = "50px serif";
+            if (score < 1){canvasContext.fillText("Score: 0", 320, 100);}
+            else {canvasContext.fillText("Score: "+score, 320, 100);}
+
+            //game over
+            if (gameOver){
+            canvasContext.fillStyle = "yellow";
+            canvasContext.font = "50px serif";
+            canvasContext.fillText("GAME OVER", 250, 300);
+            canvasContext.fillStyle = "orange";
+            canvasContext.fillText("click to continue", 230, 400);
+            canvasContext.fillStyle = "white";
+            if (finish){
+            canvasContext.fillText("Wow, you finished the game!", 110, 200);
+        }}}
+    </script>
+</body>
+</html>
